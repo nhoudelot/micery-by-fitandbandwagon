@@ -1,0 +1,3 @@
+/* misc. functions */
+
+float rnd();
