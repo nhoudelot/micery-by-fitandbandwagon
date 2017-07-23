@@ -176,7 +176,7 @@ int get_dump(SCENE *s,unsigned char *data)
             m=malloc(sizeof(MTL));
             m->next=s->materials;
             s->materials=m;
-            strcpy(m->name,data);
+            strncpy(m->name,(const char*)data,sizeof(m->name));
             while(*data++);
 
             m->ambient[3]=m->diffuse[3]=m->specular[3];
@@ -204,7 +204,7 @@ int get_dump(SCENE *s,unsigned char *data)
             o->rot=0;
             o->pivot=NULL;
 
-            strcpy(o->name,data);
+            strncpy(o->name,(const char*)data,sizeof(o->name));
             while(*data++);
 
             o->type=TYPE_OBJECT;
@@ -225,13 +225,13 @@ int get_dump(SCENE *s,unsigned char *data)
             p->dlist=-1;
             p->next=o->parts;
             o->parts=p;
-            strcpy(p->name,data);
+            strncpy(p->name,(const char*)data,sizeof(p->name));
             while(*data++);
 
             m=s->materials; /* Find material */
             while(m!=NULL)
             {
-                if(!strcmp(m->name,data))
+                if(!strcmp(m->name,(const char*)data))
                     p->material=m;
                 m=m->next;
             }
