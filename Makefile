@@ -1,5 +1,6 @@
 # unix/mac/win32
 PLATFORM = unix
+SHELL = /bin/sh
 
 # compiler
 CC = gcc
@@ -12,48 +13,60 @@ RLOG = rlog
 # external libraries
 
 BLKSIZE = 4096
-TARGET = micery
+TARGET = micery-by-fitandbandwagon
 USE_RCS = 0
 
 ifeq ($(PLATFORM),unix)
-LIBS = `sdl-config --libs` -lGLU -lGL -lm
-COPT = -Wall -ffast-math -O2 -Wall `sdl-config --cflags`\
--DBLKSIZE=$(BLKSIZE)
-endif
-
-ifeq ($(PLATFORM),mac)
-BLKSIZE = 1024
-LIBS = `sdl-config --static-libs` -lm
-COPT = -ffast-math -O2 -Wall `sdl-config --cflags` -DMAC\
--I/System/Library/Frameworks/AGL.framework/Headers\
--DBLKSIZE=$(BLKSIZE)
-endif
-
-ifeq ($(PLATFORM),win32)
-LIBS = -mwindows -lSDL -lglu32 -lopengl32 -lm
-COPT = -ffast-math -O2 -Wall -DBLKSIZE=$(BLKSIZE) -DNO_STRSEP
-TARGET = micery.exe
+LDFLAGS += $(shell pkgconf --libs sdl glu ) -lm
+CFLAGS += -O3 -flto -Wall -ffast-math $(shell pkgconf --cflags sdl glu ) -std=gnu90 -pipe -DBLKSIZE=$(BLKSIZE)
 endif
 
 # All the objects
 OBJ = 	mouse.o gl_render.o syna.o musa.o writer.o intro.o dump.o\
 	wavefront.o misc.o steering.o steer_render.o
 
+#variable de nettoyage
+RM_F = rm -f
+#variables d'instalation
+INSTALL = install
+INSTALL_DIR     = $(INSTALL) -p -d -o root -g root  -m  755
+INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_DATA    = $(INSTALL) -p    -o root -g root  -m  644
+
+prefix          = /usr
+exec_prefix     = $(prefix)
+bindir          = $(prefix)/bin
+
+#parallel compilation if available
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+ NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+ MAKEFLAGS += -j$(NUMJOBS)
+endif
+
+export
+
+all: $(TARGET)
+
 $(TARGET): main.o $(OBJ)
-	$(CC) $(COPT) -o $@ $(OBJ) $< $(LIBS)
-	strip $@
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $< $(LDFLAGS)
 
 main.o: main.c
 ifeq ($(USE_RCS),1)
 	$(CI) -l $<
 endif
-	$(CC) $(COPT) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 %.o: %.c %.h
 ifeq ($(USE_RCS),1)
 	$(CI) -l $<
 endif
-	$(CC) $(COPT) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm *~ *.o *.bak $(TARGET)
+	-@$(RM_F) *~ *.o *.bak $(TARGET)
+
+install: $(TARGET)
+	$(INSTALL_DIR) $(DESTDIR)$(bindir)
+	-@$(RM_F) $(DESTDIR)$(bindir)/$(TARGET)
+	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(bindir)
+
