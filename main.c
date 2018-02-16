@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <SDL.h>
 
@@ -40,7 +41,11 @@ int init_steer() {
     srand(time(NULL));
 
     init_maailma(&maa1,1.00,1.00,1.0);
-
+    char datapath[]="/usr/share/micery-by-fitandbandwagon/";
+    if (chdir(datapath) == 0) {
+    }else{
+         printf("Error : Could not change directory to %s\n",datapath);
+    }
     if (mouse_and_pallo_load()!=0) {
 	fprintf(stderr,"Mouse load error!!!\n");
         return -1;
